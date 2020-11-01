@@ -5,6 +5,7 @@ using DAL;
 using System.Collections.Generic;
 using DBUtil;
 using Utils;
+using System.Threading.Tasks;
 
 namespace DBHelperTest
 {
@@ -76,6 +77,27 @@ namespace DBHelperTest
                 user.UPDATE_USERID = "1";
                 user.REMARK = "测试修改用户" + _rnd.Next(1, 100);
                 m_SysUserDal.Update(user);
+                Console.WriteLine("用户 ID=" + user.ID + " 已修改");
+            }
+            else
+            {
+                Console.WriteLine("用户 ID=" + userId + " 不存在");
+            }
+        }
+        #endregion
+
+        #region 测试修改用户(异步)
+        [TestMethod]
+        public async Task TestUpdateUserAsync()
+        {
+            string userId = "10";
+            SYS_USER user = m_SysUserDal.Get(userId);
+            if (user != null)
+            {
+                user.UPDATE_USERID = "1";
+                user.REMARK = "测试修改用户" + _rnd.Next(1, 100);
+                var task = m_SysUserDal.UpdateAsync(user);
+                await task;
                 Console.WriteLine("用户 ID=" + user.ID + " 已修改");
             }
             else

@@ -42,6 +42,21 @@ namespace DAL
         }
         #endregion
 
+        #region 添加(异步)
+        /// <summary>
+        /// 添加
+        /// </summary>
+        public async Task InsertAsync(SYS_USER info)
+        {
+            using (var session = DBHelper.GetSession())
+            {
+                info.CREATE_TIME = DateTime.Now;
+                var task = session.InsertAsync(info);
+                await task;
+            }
+        }
+        #endregion
+
         #region 修改
         /// <summary>
         /// 修改
@@ -52,6 +67,21 @@ namespace DAL
             {
                 info.UPDATE_TIME = DateTime.Now;
                 session.Update(info);
+            }
+        }
+        #endregion
+
+        #region 修改(异步)
+        /// <summary>
+        /// 修改
+        /// </summary>
+        public async Task UpdateAsync(SYS_USER info)
+        {
+            using (var session = DBHelper.GetSession())
+            {
+                info.UPDATE_TIME = DateTime.Now;
+                var task = session.UpdateAsync(info);
+                await task;
             }
         }
         #endregion

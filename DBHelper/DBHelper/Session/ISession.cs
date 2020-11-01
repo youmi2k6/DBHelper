@@ -40,7 +40,17 @@ namespace DBUtil
         /// <summary>
         /// 添加
         /// </summary>
+        Task InsertAsync(object obj);
+
+        /// <summary>
+        /// 添加
+        /// </summary>
         void Insert(object obj, bool autoIncrement);
+
+        /// <summary>
+        /// 添加
+        /// </summary>
+        Task InsertAsync(object obj, bool autoIncrement);
         #endregion
 
         #region 修改

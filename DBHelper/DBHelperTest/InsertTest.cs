@@ -5,6 +5,7 @@ using DAL;
 using System.Collections.Generic;
 using DBUtil;
 using Utils;
+using System.Threading.Tasks;
 
 namespace DBHelperTest
 {
@@ -83,6 +84,20 @@ namespace DBHelperTest
             user.PASSWORD = "123456";
             user.CREATE_USERID = "1";
             m_SysUserDal.Insert(user);
+        }
+        #endregion
+
+        #region 测试添加用户(异步)
+        [TestMethod]
+        public async Task TestInsertUserAsync()
+        {
+            SYS_USER user = new SYS_USER();
+            user.USER_NAME = "testUser";
+            user.REAL_NAME = "测试插入用户";
+            user.PASSWORD = "123456";
+            user.CREATE_USERID = "1";
+            var task = m_SysUserDal.InsertAsync(user);
+            await task;
         }
         #endregion
 

@@ -642,25 +642,14 @@ namespace DBUtil
 
         #region 添加
         /// <summary>
-        /// 添加
+        /// 准备Insert的SQL
         /// </summary>
-        public void Insert(object obj)
+        private void PrepareInsertSql(object obj, bool autoIncrement, ref StringBuilder strSql, ref DbParameter[] parameters, ref int savedCount)
         {
-            Insert(obj, _autoIncrement);
-        }
-
-        /// <summary>
-        /// 添加
-        /// </summary>
-        public void Insert(object obj, bool autoIncrement)
-        {
-            StringBuilder strSql = new StringBuilder();
             Type type = obj.GetType();
             strSql.Append(string.Format("insert into {0}(", type.Name));
-
             PropertyInfo[] propertyInfoList = GetEntityProperties(type);
             List<string> propertyNameList = new List<string>();
-            int savedCount = 0;
             foreach (PropertyInfo propertyInfo in propertyInfoList)
             {
                 if (IsAutoIncrementPk(type, propertyInfo, autoIncrement)) continue;
@@ -674,7 +663,7 @@ namespace DBUtil
 
             strSql.Append(string.Format("{0})", string.Join(",", propertyNameList.ToArray())));
             strSql.Append(string.Format(" values ({0})", string.Join(",", propertyNameList.ConvertAll<string>(a => _parameterMark + a).ToArray())));
-            DbParameter[] parameters = new DbParameter[savedCount];
+            parameters = new DbParameter[savedCount];
             int k = 0;
             for (int i = 0; i < propertyInfoList.Length && savedCount > 0; i++)
             {
@@ -688,27 +677,66 @@ namespace DBUtil
                     parameters[k++] = param;
                 }
             }
+        }
+
+        /// <summary>
+        /// 添加
+        /// </summary>
+        public void Insert(object obj)
+        {
+            Insert(obj, _autoIncrement);
+        }
+
+        /// <summary>
+        /// 添加
+        /// </summary>
+        public async Task InsertAsync(object obj)
+        {
+            var task = InsertAsync(obj, _autoIncrement);
+            await task;
+        }
+
+        /// <summary>
+        /// 添加
+        /// </summary>
+        public void Insert(object obj, bool autoIncrement)
+        {
+            StringBuilder strSql = new StringBuilder();
+            int savedCount = 0;
+            DbParameter[] parameters = null;
+
+            PrepareInsertSql(obj, autoIncrement, ref strSql, ref parameters, ref savedCount);
 
             ExecuteSql(strSql.ToString(), parameters);
+        }
+
+        /// <summary>
+        /// 添加
+        /// </summary>
+        public async Task InsertAsync(object obj, bool autoIncrement)
+        {
+            StringBuilder strSql = new StringBuilder();
+            int savedCount = 0;
+            DbParameter[] parameters = null;
+
+            PrepareInsertSql(obj, autoIncrement, ref strSql, ref parameters, ref savedCount);
+
+            var task = ExecuteSqlAsync(strSql.ToString(), parameters);
+            await task;
         }
         #endregion
 
         #region 修改
         /// <summary>
-        /// 修改
+        /// 准备Update的SQL
         /// </summary>
-        public void Update(object obj)
+        private void PrepareUpdateSql(object obj, object oldObj, ref StringBuilder strSql, ref DbParameter[] parameters, ref int savedCount)
         {
-            object oldObj = Find(obj);
-            if (oldObj == null) throw new Exception("无法获取到旧数据");
-
-            StringBuilder strSql = new StringBuilder();
             Type type = obj.GetType();
             strSql.Append(string.Format("update {0} ", type.Name));
 
             PropertyInfo[] propertyInfoList = GetEntityProperties(type);
             List<string> propertyNameList = new List<string>();
-            int savedCount = 0;
             foreach (PropertyInfo propertyInfo in propertyInfoList)
             {
                 if (propertyInfo.GetCustomAttributes(typeof(IsDBFieldAttribute), false).Length > 0)
@@ -724,7 +752,7 @@ namespace DBUtil
             }
 
             strSql.Append(string.Format(" set "));
-            DbParameter[] parameters = new DbParameter[savedCount];
+            parameters = new DbParameter[savedCount];
             StringBuilder sbPros = new StringBuilder();
             int k = 0;
             for (int i = 0; i < propertyInfoList.Length && savedCount > 0; i++)
@@ -747,6 +775,20 @@ namespace DBUtil
                 strSql.Append(sbPros.ToString(0, sbPros.Length - 1));
             }
             strSql.Append(string.Format(" where 1=1 {0}", CreatePkCondition(obj.GetType(), obj)));
+        }
+
+        /// <summary>
+        /// 修改
+        /// </summary>
+        public void Update(object obj)
+        {
+            object oldObj = Find(obj);
+            if (oldObj == null) throw new Exception("无法获取到旧数据");
+
+            StringBuilder strSql = new StringBuilder();
+            int savedCount = 0;
+            DbParameter[] parameters = null;
+            PrepareUpdateSql(obj, oldObj, ref strSql, ref parameters, ref savedCount);
 
             if (savedCount > 0)
             {
@@ -764,50 +806,9 @@ namespace DBUtil
             if (oldObj == null) throw new Exception("无法获取到旧数据");
 
             StringBuilder strSql = new StringBuilder();
-            Type type = obj.GetType();
-            strSql.Append(string.Format("update {0} ", type.Name));
-
-            PropertyInfo[] propertyInfoList = GetEntityProperties(type);
-            List<string> propertyNameList = new List<string>();
             int savedCount = 0;
-            foreach (PropertyInfo propertyInfo in propertyInfoList)
-            {
-                if (propertyInfo.GetCustomAttributes(typeof(IsDBFieldAttribute), false).Length > 0)
-                {
-                    object oldVal = propertyInfo.GetValue(oldObj, null);
-                    object val = propertyInfo.GetValue(obj, null);
-                    if (!object.Equals(oldVal, val))
-                    {
-                        propertyNameList.Add(propertyInfo.Name);
-                        savedCount++;
-                    }
-                }
-            }
-
-            strSql.Append(string.Format(" set "));
-            DbParameter[] parameters = new DbParameter[savedCount];
-            StringBuilder sbPros = new StringBuilder();
-            int k = 0;
-            for (int i = 0; i < propertyInfoList.Length && savedCount > 0; i++)
-            {
-                PropertyInfo propertyInfo = propertyInfoList[i];
-                if (propertyInfo.GetCustomAttributes(typeof(IsDBFieldAttribute), false).Length > 0)
-                {
-                    object oldVal = propertyInfo.GetValue(oldObj, null);
-                    object val = propertyInfo.GetValue(obj, null);
-                    if (!object.Equals(oldVal, val))
-                    {
-                        sbPros.Append(string.Format(" {0}={1}{0},", propertyInfo.Name, _parameterMark));
-                        DbParameter param = GetDbParameter(_parameterMark + propertyInfo.Name, val == null ? DBNull.Value : val);
-                        parameters[k++] = param;
-                    }
-                }
-            }
-            if (sbPros.Length > 0)
-            {
-                strSql.Append(sbPros.ToString(0, sbPros.Length - 1));
-            }
-            strSql.Append(string.Format(" where 1=1 {0}", CreatePkCondition(obj.GetType(), obj)));
+            DbParameter[] parameters = null;
+            PrepareUpdateSql(obj, oldObj, ref strSql, ref parameters, ref savedCount);
 
             if (savedCount > 0)
             {
@@ -1257,7 +1258,6 @@ namespace DBUtil
         public async Task<List<T>> FindListBySqlAsync<T>(string sql, params DbParameter[] cmdParms) where T : new()
         {
             List<T> list = new List<T>();
-            object obj;
             IDataReader rd = null;
 
             try
@@ -1265,52 +1265,7 @@ namespace DBUtil
                 var task = ExecuteReaderAsync(sql, cmdParms);
                 rd = await task;
 
-                if (typeof(T) == typeof(int))
-                {
-                    while (rd.Read())
-                    {
-                        list.Add((T)rd[0]);
-                    }
-                }
-                else if (typeof(T) == typeof(string))
-                {
-                    while (rd.Read())
-                    {
-                        list.Add((T)rd[0]);
-                    }
-                }
-                else
-                {
-                    PropertyInfo[] propertyInfoList = GetEntityProperties(typeof(T));
-
-                    int fcnt = rd.FieldCount;
-                    Dictionary<string, string> fields = new Dictionary<string, string>();
-                    for (int i = 0; i < fcnt; i++)
-                    {
-                        string field = rd.GetName(i).ToUpper();
-                        if (!fields.ContainsKey(field))
-                        {
-                            fields.Add(field, null);
-                        }
-                    }
-
-                    while (rd.Read())
-                    {
-                        IDataRecord record = rd;
-                        obj = new T();
-
-                        foreach (PropertyInfo pro in propertyInfoList)
-                        {
-                            if (!fields.ContainsKey(pro.Name.ToUpper()) || record[pro.Name] == DBNull.Value)
-                            {
-                                continue;
-                            }
-
-                            pro.SetValue(obj, record[pro.Name] == DBNull.Value ? null : ConvertValue(record[pro.Name], pro.PropertyType), null);
-                        }
-                        list.Add((T)obj);
-                    }
-                }
+                IDataReaderToList(rd, ref list);
             }
             catch (Exception ex)
             {

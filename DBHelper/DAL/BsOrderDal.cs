@@ -115,6 +115,67 @@ namespace DAL
         }
         #endregion
 
+        #region 修改(异步)
+        /// <summary>
+        /// 修改
+        /// </summary>
+        public async Task<string> UpdateAsync(BS_ORDER order, List<BS_ORDER_DETAIL> detailList)
+        {
+            using (var session = DBHelper.GetSession())
+            {
+                try
+                {
+                    session.BeginTransaction();
+
+                    List<BS_ORDER_DETAIL> oldDetailList = ServiceHelper.Get<BsOrderDetailDal>().GetListByOrderId(order.ID); //根据订单ID查询旧订单明细
+
+                    foreach (BS_ORDER_DETAIL oldDetail in oldDetailList)
+                    {
+                        if (!detailList.Exists(a => a.ID == oldDetail.ID)) //该旧订单明细已从列表中删除
+                        {
+                            session.DeleteById<BS_ORDER_DETAIL>(oldDetail.ID); //删除旧订单明细
+                        }
+                    }
+
+                    decimal amount = 0;
+                    foreach (BS_ORDER_DETAIL detail in detailList)
+                    {
+                        amount += detail.PRICE * detail.QUANTITY;
+
+                        if (oldDetailList.Exists(a => a.ID == detail.ID)) //该订单明细存在
+                        {
+                            detail.UPDATE_TIME = DateTime.Now;
+                            var task = session.UpdateAsync(detail);
+                            await task;
+                        }
+                        else //该订单明细不存在
+                        {
+                            detail.ID = Guid.NewGuid().ToString("N");
+                            detail.ORDER_ID = order.ID;
+                            detail.CREATE_TIME = DateTime.Now;
+                            session.Insert(detail);
+                        }
+                    }
+                    order.AMOUNT = amount;
+
+                    order.UPDATE_TIME = DateTime.Now;
+                    var task3 = session.UpdateAsync(order);
+                    await task3;
+
+                    session.CommitTransaction();
+
+                    return order.ID;
+                }
+                catch (Exception ex)
+                {
+                    session.RollbackTransaction();
+                    Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
+                    throw ex;
+                }
+            }
+        }
+        #endregion
+
         #region 根据ID查询单个记录
         /// <summary>
         /// 根据ID查询单个记录
@@ -170,6 +231,49 @@ namespace DAL
                 sql.AppendSql(" order by t.order_time desc, t.id asc ");
 
                 List<BS_ORDER> list = session.FindListBySql<BS_ORDER>(sql.SQL, sql.Params);
+                return list;
+            }
+        }
+        #endregion
+
+        #region 查询集合(异步查询)
+        /// <summary>
+        /// 查询集合
+        /// </summary>
+        public async Task<List<BS_ORDER>> GetListAsync(int? status, string remark, DateTime? startTime, DateTime? endTime)
+        {
+            using (var session = DBHelper.GetSession())
+            {
+                SqlString sql = new SqlString(@"
+                    select t.*, u.real_name as OrderUserRealName
+                    from bs_order t
+                    left join sys_user u on t.order_userid=u.id
+                    where 1=1");
+
+                if (status != null)
+                {
+                    sql.AppendSql(" and t.status=@status", status);
+                }
+
+                if (!string.IsNullOrWhiteSpace(remark))
+                {
+                    sql.AppendSql(" and t.remark like concat('%',@roomNo,'%')", remark);
+                }
+
+                if (startTime != null)
+                {
+                    sql.AppendSql(" and t.order_time>=STR_TO_DATE(@startTime, '%Y-%m-%d %H:%i:%s') ", startTime.Value.ToString("yyyy-MM-dd HH:mm:ss"));
+                }
+
+                if (endTime != null)
+                {
+                    sql.AppendSql(" and t.order_time<=STR_TO_DATE(@endTime, '%Y-%m-%d %H:%i:%s') ", endTime.Value.ToString("yyyy-MM-dd HH:mm:ss"));
+                }
+
+                sql.AppendSql(" order by t.order_time desc, t.id asc ");
+
+                var task = session.FindListBySqlAsync<BS_ORDER>(sql.SQL, sql.Params);
+                List<BS_ORDER> list = await task;
                 return list;
             }
         }
