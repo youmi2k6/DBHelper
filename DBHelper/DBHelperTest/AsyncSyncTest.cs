@@ -18,15 +18,15 @@ namespace DBHelperTest
     {
         #region 变量
         private BsOrderDal m_BsOrderDal = ServiceHelper.Get<BsOrderDal>();
-        private int _n = 100;
+        private int _n = 500;
         private int _pageSize = 50;
         #endregion
 
         #region 构造函数
         public AsyncSyncTest()
         {
-            //ThreadPool.SetMaxThreads(1000, 1000);
-            //ThreadPool.SetMinThreads(50, 50);
+            ThreadPool.SetMaxThreads(1000, 1000);
+            ThreadPool.SetMinThreads(500, 500);
 
             PagerModel pagerModel = new PagerModel();
             pagerModel.CurrentPage = 1;
