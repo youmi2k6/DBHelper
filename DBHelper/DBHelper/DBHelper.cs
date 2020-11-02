@@ -1300,12 +1300,12 @@ namespace DBUtil
             string commandText = null;
             commandText = string.Format("select count(*) from ({0}) T", sql);
             cmd = GetCommand(commandText, _conn);
-            pagerModel.totalRows = int.Parse(cmd.ExecuteScalar().ToString());
+            pagerModel.TotalRows = int.Parse(cmd.ExecuteScalar().ToString());
 
-            sql = PageSqlFactory.CreatePageSql(_dbType, sql, orderby, pageSize, currentPage, pagerModel.totalRows);
+            sql = PageSqlFactory.CreatePageSql(_dbType, sql, orderby, pageSize, currentPage, pagerModel.TotalRows);
 
             List<T> list = FindListBySql<T>(sql);
-            pagerModel.result = list;
+            pagerModel.Result = list;
 
             return pagerModel;
         }
@@ -1325,13 +1325,13 @@ namespace DBUtil
             commandText = string.Format("select count(*) from ({0}) T", sql);
             cmd = GetCommand(commandText, _conn);
             foreach (DbParameter parm in cmdParms) cmd.Parameters.Add(parm);
-            pagerModel.totalRows = int.Parse(cmd.ExecuteScalar().ToString());
+            pagerModel.TotalRows = int.Parse(cmd.ExecuteScalar().ToString());
             cmd.Parameters.Clear();
 
-            sql = PageSqlFactory.CreatePageSql(_dbType, sql, orderby, pageSize, currentPage, pagerModel.totalRows);
+            sql = PageSqlFactory.CreatePageSql(_dbType, sql, orderby, pageSize, currentPage, pagerModel.TotalRows);
 
             List<T> list = FindListBySql<T>(sql, cmdParms);
-            pagerModel.result = list;
+            pagerModel.Result = list;
 
             return pagerModel;
         }
@@ -1351,14 +1351,14 @@ namespace DBUtil
             foreach (DbParameter parm in cmdParms) cmd.Parameters.Add(parm);
             var task2 = cmd.ExecuteScalarAsync();
             object obj = await task2;
-            pagerModel.totalRows = int.Parse(obj.ToString());
+            pagerModel.TotalRows = int.Parse(obj.ToString());
             cmd.Parameters.Clear();
 
-            sql = PageSqlFactory.CreatePageSql(_dbType, sql, orderby, pageSize, currentPage, pagerModel.totalRows);
+            sql = PageSqlFactory.CreatePageSql(_dbType, sql, orderby, pageSize, currentPage, pagerModel.TotalRows);
 
             var task = FindListBySqlAsync<T>(sql, cmdParms);
             List<T> list = await task;
-            pagerModel.result = list;
+            pagerModel.Result = list;
 
             return pagerModel;
         }

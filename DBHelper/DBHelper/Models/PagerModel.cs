@@ -16,27 +16,27 @@ namespace DBUtil
         /// <summary>
         /// 当前页数
         /// </summary>
-        public int page { get; set; }
+        public int CurrentPage { get; set; }
         /// <summary>
         /// 每页记录数
         /// </summary>
-        public int rows { get; set; }
+        public int PageSize { get; set; }
         /// <summary>
         /// 排序字段
         /// </summary>
-        public string sort { get; set; }
+        public string Sort { get; set; }
         /// <summary>
         /// 排序的方式asc，desc
         /// </summary>
-        public string order { get; set; }
+        public string Order { get; set; }
         /// <summary>
         /// 记录
         /// </summary>
-        public object result { get; set; }
+        public object Result { get; set; }
         /// <summary>
-        /// 记录数
+        /// 记录总数
         /// </summary>
-        public int totalRows { get; set; }
+        public int TotalRows { get; set; }
         #endregion
 
         #region 构造函数
@@ -44,15 +44,16 @@ namespace DBUtil
         {
 
         }
+
         /// <summary>
-        /// 
+        /// 分页
         /// </summary>
         /// <param name="page">当前页数</param>
         /// <param name="rows">每页记录数</param>
         public PagerModel(int page, int rows)
         {
-            this.page = page;
-            this.rows = rows;
+            this.CurrentPage = page;
+            this.PageSize = rows;
         }
         #endregion
 
@@ -60,13 +61,13 @@ namespace DBUtil
         /// <summary>
         /// 总页数
         /// </summary>
-        public int pageCount
+        public int PageCount
         {
             get
             {
-                if (rows != 0)
+                if (PageSize != 0)
                 {
-                    return (totalRows - 1) / rows + 1;
+                    return (TotalRows - 1) / PageSize + 1;
                 }
                 else
                 {
@@ -77,13 +78,13 @@ namespace DBUtil
         /// <summary>
         /// 上一页
         /// </summary>
-        public int prePage
+        public int PrePage
         {
             get
             {
-                if (page - 1 > 0)
+                if (CurrentPage - 1 > 0)
                 {
-                    return page - 1;
+                    return CurrentPage - 1;
                 }
                 return 1;
             }
@@ -91,15 +92,15 @@ namespace DBUtil
         /// <summary>
         /// 下一页
         /// </summary>
-        public int nextPage
+        public int NextPage
         {
             get
             {
-                if (page + 1 < pageCount)
+                if (CurrentPage + 1 < PageCount)
                 {
-                    return page + 1;
+                    return CurrentPage + 1;
                 }
-                return pageCount;
+                return PageCount;
             }
         }
         #endregion

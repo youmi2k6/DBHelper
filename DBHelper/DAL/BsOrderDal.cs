@@ -56,6 +56,51 @@ namespace DAL
         }
         #endregion
 
+        #region 添加异步
+        /// <summary>
+        /// 添加
+        /// </summary>
+        public async Task<string> InsertAsync(BS_ORDER order, List<BS_ORDER_DETAIL> detailList)
+        {
+            var task2 = DBHelper.GetSessionAsync();
+            using (var session = await task2)
+            {
+                try
+                {
+                    session.BeginTransaction();
+
+                    order.ID = Guid.NewGuid().ToString("N");
+                    order.CREATE_TIME = DateTime.Now;
+
+                    decimal amount = 0;
+                    foreach (BS_ORDER_DETAIL detail in detailList)
+                    {
+                        detail.ID = Guid.NewGuid().ToString("N");
+                        detail.ORDER_ID = order.ID;
+                        detail.CREATE_TIME = DateTime.Now;
+                        amount += detail.PRICE * detail.QUANTITY;
+                        var task3 = session.InsertAsync(detail);
+                        await task3;
+                    }
+                    order.AMOUNT = amount;
+
+                    var task = session.InsertAsync(order);
+                    await task;
+
+                    session.CommitTransaction();
+
+                    return order.ID;
+                }
+                catch (Exception ex)
+                {
+                    session.RollbackTransaction();
+                    Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
+                    throw ex;
+                }
+            }
+        }
+        #endregion
+
         #region 修改
         /// <summary>
         /// 修改
@@ -121,7 +166,8 @@ namespace DAL
         /// </summary>
         public async Task<string> UpdateAsync(BS_ORDER order, List<BS_ORDER_DETAIL> detailList)
         {
-            using (var session = DBHelper.GetSession())
+            var task2 = DBHelper.GetSessionAsync();
+            using (var session = await task2)
             {
                 try
                 {
@@ -242,7 +288,8 @@ namespace DAL
         /// </summary>
         public async Task<List<BS_ORDER>> GetListAsync(int? status, string remark, DateTime? startTime, DateTime? endTime)
         {
-            using (var session = DBHelper.GetSession())
+            var task2 = DBHelper.GetSessionAsync();
+            using (var session = await task2)
             {
                 SqlString sql = new SqlString(@"
                     select t.*, u.real_name as OrderUserRealName
@@ -314,8 +361,51 @@ namespace DAL
                 }
 
                 string orderby = " order by t.order_time desc, t.id asc ";
-                pager = session.FindPageBySql<BS_ORDER>(sql.SQL, orderby, pager.rows, pager.page, sql.Params);
-                return pager.result as List<BS_ORDER>;
+                pager = session.FindPageBySql<BS_ORDER>(sql.SQL, orderby, pager.PageSize, pager.CurrentPage, sql.Params);
+                return pager.Result as List<BS_ORDER>;
+            }
+        }
+        #endregion
+
+        #region 分页查询集合(异步查询)
+        /// <summary>
+        /// 分页查询集合
+        /// </summary>
+        public async Task<PagerModel> GetListPageAsync(PagerModel pager, int? status, string remark, DateTime? startTime, DateTime? endTime)
+        {
+            var task2 = DBHelper.GetSessionAsync();
+            using (var session = await task2)
+            {
+                SqlString sql = new SqlString(@"
+                    select t.*, u.real_name as OrderUserRealName
+                    from bs_order t
+                    left join sys_user u on t.order_userid=u.id
+                    where 1=1");
+
+                if (status != null)
+                {
+                    sql.AppendSql(" and t.status=@status", status);
+                }
+
+                if (!string.IsNullOrWhiteSpace(remark))
+                {
+                    sql.AppendSql(" and t.remark like concat('%',@roomNo,'%')", remark);
+                }
+
+                if (startTime != null)
+                {
+                    sql.AppendSql(" and t.order_time>=STR_TO_DATE(@startTime, '%Y-%m-%d %H:%i:%s') ", startTime.Value.ToString("yyyy-MM-dd HH:mm:ss"));
+                }
+
+                if (endTime != null)
+                {
+                    sql.AppendSql(" and t.order_time<=STR_TO_DATE(@endTime, '%Y-%m-%d %H:%i:%s') ", endTime.Value.ToString("yyyy-MM-dd HH:mm:ss"));
+                }
+
+                string orderby = " order by t.order_time desc, t.id asc ";
+                var task = session.FindPageBySqlAsync<BS_ORDER>(sql.SQL, orderby, pager.PageSize, pager.CurrentPage, sql.Params);
+                pager = await task;
+                return pager;
             }
         }
         #endregion

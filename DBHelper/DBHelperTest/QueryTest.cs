@@ -33,8 +33,8 @@ namespace DBHelperTest
         public void TestQueryPage()
         {
             PagerModel pagerModel = new PagerModel();
-            pagerModel.page = 1;
-            pagerModel.rows = 10;
+            pagerModel.CurrentPage = 1;
+            pagerModel.PageSize = 10;
             List<BS_ORDER> list = m_BsOrderDal.GetListPage(ref pagerModel, 0, null, DateTime.MinValue, DateTime.Now.AddDays(1));
 
             foreach (BS_ORDER item in list)
