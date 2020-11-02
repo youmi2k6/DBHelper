@@ -836,6 +836,21 @@ namespace DBUtil
         /// <summary>
         /// 根据Id删除
         /// </summary>
+        public async Task DeleteByIdAsync<T>(string id)
+        {
+            Type type = typeof(T);
+            StringBuilder sbSql = new StringBuilder();
+            DbParameter[] cmdParms = new DbParameter[1];
+            cmdParms[0] = GetDbParameter(_parameterMark + GetIdName(type), id);
+            sbSql.Append(string.Format("delete from {0} where {2}={1}{2}", type.Name, _parameterMark, GetIdName(type)));
+
+            var task = ExecuteSqlAsync(sbSql.ToString(), cmdParms);
+            await task;
+        }
+
+        /// <summary>
+        /// 根据Id删除
+        /// </summary>
         public void DeleteById<T>(long id)
         {
             DeleteById<T>(id.ToString());
@@ -844,9 +859,27 @@ namespace DBUtil
         /// <summary>
         /// 根据Id删除
         /// </summary>
+        public async Task DeleteByIdAsync<T>(long id)
+        {
+            var task = DeleteByIdAsync<T>(id.ToString());
+            await task;
+        }
+
+        /// <summary>
+        /// 根据Id删除
+        /// </summary>
         public void DeleteById<T>(int id)
         {
             DeleteById<T>(id.ToString());
+        }
+
+        /// <summary>
+        /// 根据Id删除
+        /// </summary>
+        public async Task DeleteByIdAsync<T>(int id)
+        {
+            var task = DeleteByIdAsync<T>(id.ToString());
+            await task;
         }
 
         /// <summary>
@@ -873,6 +906,30 @@ namespace DBUtil
         }
 
         /// <summary>
+        /// 根据Id集合删除
+        /// </summary>
+        public async void BatchDeleteByIdsAsync<T>(string ids)
+        {
+            if (string.IsNullOrWhiteSpace(ids)) return;
+
+            Type type = typeof(T);
+            StringBuilder sbSql = new StringBuilder();
+            string[] idArr = ids.Split(',');
+            DbParameter[] cmdParms = new DbParameter[idArr.Length];
+            sbSql.AppendFormat("delete from {0} where {1} in (", type.Name, GetIdName(type));
+            for (int i = 0; i < idArr.Length; i++)
+            {
+                cmdParms[i] = GetDbParameter(_parameterMark + GetIdName(type) + i, idArr[i]);
+                sbSql.AppendFormat("{1}{2}{3},", type.Name, _parameterMark, GetIdName(type), i);
+            }
+            sbSql.Remove(sbSql.Length - 1, 1);
+            sbSql.Append(")");
+
+            var task = ExecuteSqlAsync(sbSql.ToString(), cmdParms);
+            await task;
+        }
+
+        /// <summary>
         /// 根据条件删除
         /// </summary>
         public void DeleteByCondition<T>(string condition)
@@ -885,6 +942,22 @@ namespace DBUtil
             sbSql.Append(string.Format("delete from {0} where {1}", type.Name, condition));
 
             ExecuteSql(sbSql.ToString());
+        }
+
+        /// <summary>
+        /// 根据条件删除
+        /// </summary>
+        public async Task DeleteByConditionAsync<T>(string condition)
+        {
+            if (string.IsNullOrWhiteSpace(condition)) return;
+
+            Type type = typeof(T);
+            StringBuilder sbSql = new StringBuilder();
+            SqlFilter(ref condition);
+            sbSql.Append(string.Format("delete from {0} where {1}", type.Name, condition));
+
+            var task = ExecuteSqlAsync(sbSql.ToString());
+            await task;
         }
         #endregion
 
@@ -1069,6 +1142,28 @@ namespace DBUtil
                 return default(T);
             }
         }
+
+        /// <summary>
+        /// 根据Id获取实体
+        /// </summary>
+        public async Task<T> FindByIdAsync<T>(string id) where T : new()
+        {
+            Type type = typeof(T);
+
+            string sql = string.Format("select * from {0} where {2}='{1}'", type.Name, id, GetIdName(type));
+
+            var task = FindAsync(type, sql, null);
+            object result = await task;
+
+            if (result != null)
+            {
+                return (T)result;
+            }
+            else
+            {
+                return default(T);
+            }
+        }
         #endregion
 
         #region 根据sql获取实体
@@ -1079,6 +1174,25 @@ namespace DBUtil
         {
             Type type = typeof(T);
             object result = Find(type, sql, null);
+
+            if (result != null)
+            {
+                return (T)result;
+            }
+            else
+            {
+                return default(T);
+            }
+        }
+
+        /// <summary>
+        /// 根据sql获取实体
+        /// </summary>
+        public async Task<T> FindBySqlAsync<T>(string sql) where T : new()
+        {
+            Type type = typeof(T);
+            var task = FindAsync(type, sql, null);
+            object result = await task;
 
             if (result != null)
             {
@@ -1219,6 +1333,37 @@ namespace DBUtil
 
             return list;
         }
+
+        /// <summary>
+        /// 获取列表
+        /// </summary>
+        public async Task<List<T>> FindListBySqlAsync<T>(string sql) where T : new()
+        {
+            List<T> list = new List<T>();
+            IDataReader rd = null;
+
+            try
+            {
+                var task = ExecuteReaderAsync(sql);
+                rd = await task;
+
+                IDataReaderToList(rd, ref list);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (rd != null && !rd.IsClosed)
+                {
+                    rd.Close();
+                    rd.Dispose();
+                }
+            }
+
+            return list;
+        }
         #endregion
 
         #region 获取列表(参数化查询)
@@ -1305,6 +1450,30 @@ namespace DBUtil
             sql = PageSqlFactory.CreatePageSql(_dbType, sql, orderby, pageSize, currentPage, pagerModel.TotalRows);
 
             List<T> list = FindListBySql<T>(sql);
+            pagerModel.Result = list;
+
+            return pagerModel;
+        }
+
+        /// <summary>
+        /// 分页(任意entity，尽量少的字段)
+        /// </summary>
+        public async Task<PagerModel> FindPageBySqlAsync<T>(string sql, string orderby, int pageSize, int currentPage) where T : new()
+        {
+            PagerModel pagerModel = new PagerModel(currentPage, pageSize);
+
+            DbCommand cmd = null;
+            string commandText = null;
+            commandText = string.Format("select count(*) from ({0}) T", sql);
+            cmd = GetCommand(commandText, _conn);
+            var task2 = cmd.ExecuteScalarAsync();
+            object obj = await task2;
+            pagerModel.TotalRows = int.Parse(obj.ToString());
+
+            sql = PageSqlFactory.CreatePageSql(_dbType, sql, orderby, pageSize, currentPage, pagerModel.TotalRows);
+
+            var task = FindListBySqlAsync<T>(sql);
+            List<T> list = await task;
             pagerModel.Result = list;
 
             return pagerModel;

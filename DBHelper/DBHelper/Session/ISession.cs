@@ -74,7 +74,17 @@ namespace DBUtil
         /// <summary>
         /// 根据Id删除
         /// </summary>
+        Task DeleteByIdAsync<T>(string id);
+
+        /// <summary>
+        /// 根据Id删除
+        /// </summary>
         void DeleteById<T>(long id);
+
+        /// <summary>
+        /// 根据Id删除
+        /// </summary>
+        Task DeleteByIdAsync<T>(long id);
 
         /// <summary>
         /// 根据Id删除
@@ -82,14 +92,29 @@ namespace DBUtil
         void DeleteById<T>(int id);
 
         /// <summary>
+        /// 根据Id删除
+        /// </summary>
+        Task DeleteByIdAsync<T>(int id);
+
+        /// <summary>
         /// 根据Id集合删除
         /// </summary>
         void BatchDeleteByIds<T>(string ids);
 
         /// <summary>
+        /// 根据Id集合删除
+        /// </summary>
+        void BatchDeleteByIdsAsync<T>(string ids);
+
+        /// <summary>
         /// 根据条件删除
         /// </summary>
         void DeleteByCondition<T>(string conditions);
+
+        /// <summary>
+        /// 根据条件删除
+        /// </summary>
+        Task DeleteByConditionAsync<T>(string condition);
         #endregion
 
         #region 获取实体
@@ -99,6 +124,11 @@ namespace DBUtil
         /// 根据Id获取实体
         /// </summary>
         T FindById<T>(string id) where T : new();
+
+        /// <summary>
+        /// 根据Id获取实体
+        /// </summary>
+        Task<T> FindByIdAsync<T>(string id) where T : new();
         #endregion
 
         #region 根据sql获取实体
@@ -106,6 +136,11 @@ namespace DBUtil
         /// 根据sql获取实体
         /// </summary>
         T FindBySql<T>(string sql) where T : new();
+
+        /// <summary>
+        /// 根据sql获取实体
+        /// </summary>
+        Task<T> FindBySqlAsync<T>(string sql) where T : new();
         #endregion
 
         #region 根据sql获取实体(参数化查询)
@@ -129,6 +164,11 @@ namespace DBUtil
         /// 获取列表
         /// </summary>
         List<T> FindListBySql<T>(string sql) where T : new();
+
+        /// <summary>
+        /// 获取列表
+        /// </summary>
+        Task<List<T>> FindListBySqlAsync<T>(string sql) where T : new();
         #endregion
 
         #region 获取列表(参数化查询)
@@ -152,6 +192,11 @@ namespace DBUtil
         /// 分页(任意entity，尽量少的字段)
         /// </summary>
         PagerModel FindPageBySql<T>(string sql, string orderby, int pageSize, int currentPage) where T : new();
+
+        /// <summary>
+        /// 分页(任意entity，尽量少的字段)
+        /// </summary>
+        Task<PagerModel> FindPageBySqlAsync<T>(string sql, string orderby, int pageSize, int currentPage) where T : new();
         #endregion
 
         #region 分页获取列表(参数化查询)
