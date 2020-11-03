@@ -995,12 +995,16 @@ namespace DBUtil
 
                 foreach (PropertyInfo pro in propertyInfoList)
                 {
-                    if (!fields.ContainsKey(pro.Name.ToUpper()) || record[pro.Name] == DBNull.Value)
+                    object val = record[pro.Name];
+
+                    if (!fields.ContainsKey(pro.Name.ToUpper()) || val == DBNull.Value)
                     {
                         continue;
                     }
 
-                    pro.SetValue(result, record[pro.Name] == DBNull.Value ? null : ConvertValue(record[pro.Name], pro.PropertyType), null);
+                    val = val == DBNull.Value ? null : ConvertValue(val, pro.PropertyType);
+
+                    pro.SetValue(result, val);
                 }
             }
         }
@@ -1289,15 +1293,15 @@ namespace DBUtil
                     }
                 }
 
-                Dictionary<string, Action<T, object>> emitActions = null;
-                if (_emitActions == null)
-                {
-                    emitActions = new Dictionary<string, Action<T, object>>();
-                }
-                else
-                {
-                    emitActions = (Dictionary<string, Action<T, object>>)_emitActions;
-                }
+                //Dictionary<string, Action<T, object>> emitActions = null;
+                //if (_emitActions == null)
+                //{
+                //    emitActions = new Dictionary<string, Action<T, object>>();
+                //}
+                //else
+                //{
+                //    emitActions = (Dictionary<string, Action<T, object>>)_emitActions;
+                //}
 
                 while (rd.Read())
                 {
@@ -1313,30 +1317,28 @@ namespace DBUtil
                             continue;
                         }
 
-                        //object val = record.GetValue(1);
-
                         val = val == DBNull.Value ? null : ConvertValue(val, pro.PropertyType);
 
-                        Action<T, object> emitSetter = null;
-                        if (emitActions.ContainsKey(pro.Name))
-                        {
-                            emitSetter = emitActions[pro.Name];
-                        }
-                        else
-                        {
-                            emitSetter = EmitSetter<T>(pro.Name);
-                            emitActions.Add(pro.Name, emitSetter);
-                        }
+                        //Action<T, object> emitSetter = null;
+                        //if (emitActions.ContainsKey(pro.Name))
+                        //{
+                        //    emitSetter = emitActions[pro.Name];
+                        //}
+                        //else
+                        //{
+                        //    emitSetter = EmitSetter<T>(pro.Name);
+                        //    emitActions.Add(pro.Name, emitSetter);
+                        //}
 
-                        emitSetter(obj, val);
+                        //emitSetter(obj, val);
 
-                        //pro.SetValue(obj, val);
+                        pro.SetValue(obj, val);
                     }
 
                     list.Add((T)obj);
                 }
 
-                _emitActions = emitActions;
+                //_emitActions = emitActions;
             }
         }
         #endregion
