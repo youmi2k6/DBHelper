@@ -169,6 +169,25 @@ namespace DAL
                 case "CLOB":
                     data_type = "string";
                     break;
+                case "BLOB":
+                    data_type = "string";
+                    break;
+                case "TIMESTAMP(1)":
+                case "TIMESTAMP(2)":
+                case "TIMESTAMP(3)":
+                case "TIMESTAMP(4)":
+                case "TIMESTAMP(5)":
+                case "TIMESTAMP(6)":
+                case "TIMESTAMP(7)":
+                    if (column["notnull"] == "1")
+                    {
+                        data_type = "DateTime";
+                    }
+                    else
+                    {
+                        data_type = "DateTime?";
+                    }
+                    break;
                 default:
                     throw new Exception("Model生成器未实现数据库字段类型" + column["data_type"] + "的转换");
             }

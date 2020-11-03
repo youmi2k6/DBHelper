@@ -45,6 +45,7 @@
     <Compile Include="ExtModels\SYS_USER.cs" />
     <Compile Include="Models\BS_ORDER.cs" />
     <Compile Include="Models\BS_ORDER_DETAIL.cs" />
+    <Compile Include="Models\CARINFO_MERGE.cs" />
     <Compile Include="Models\SYS_USER.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

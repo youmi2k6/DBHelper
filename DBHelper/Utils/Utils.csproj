@@ -40,7 +40,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CacheUtil.cs" />
+    <Compile Include="FileCacheUtil.cs" />
+    <Compile Include="LogTimeUtil.cs" />
     <Compile Include="LogUtil.cs" />
+    <Compile Include="MemoryCacheUtil.cs" />
     <Compile Include="ModelToStringUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RunHelper.cs" />
