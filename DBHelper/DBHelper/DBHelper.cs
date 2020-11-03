@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using MySql.Data.MySqlClient;
 using System.Data.OleDb;
 using System.Threading.Tasks;
+using System.Reflection.Emit;
 /* ----------------------------------------------------------------------
 * 作    者：suxiang
 * 创建日期：2016年11月23日
@@ -73,6 +74,11 @@ namespace DBUtil
         /// 数据库连接
         /// </summary>
         private DbConnection _conn;
+
+        /// <summary>
+        /// Emit Action集合
+        /// </summary>
+        private object _emitActions = null;
         #endregion
 
         #region 静态构造函数
@@ -1283,6 +1289,16 @@ namespace DBUtil
                     }
                 }
 
+                Dictionary<string, Action<T, object>> emitActions = null;
+                if (_emitActions == null)
+                {
+                    emitActions = new Dictionary<string, Action<T, object>>();
+                }
+                else
+                {
+                    emitActions = (Dictionary<string, Action<T, object>>)_emitActions;
+                }
+
                 while (rd.Read())
                 {
                     IDataRecord record = rd;
@@ -1290,15 +1306,37 @@ namespace DBUtil
 
                     foreach (PropertyInfo pro in propertyInfoList)
                     {
-                        if (!fields.ContainsKey(pro.Name.ToUpper()) || record[pro.Name] == DBNull.Value)
+                        object val = record[pro.Name];
+
+                        if (!fields.ContainsKey(pro.Name.ToUpper()) || val == DBNull.Value)
                         {
                             continue;
                         }
 
-                        pro.SetValue(obj, record[pro.Name] == DBNull.Value ? null : ConvertValue(record[pro.Name], pro.PropertyType), null);
+                        //object val = record.GetValue(1);
+
+                        val = val == DBNull.Value ? null : ConvertValue(val, pro.PropertyType);
+
+                        Action<T, object> emitSetter = null;
+                        if (emitActions.ContainsKey(pro.Name))
+                        {
+                            emitSetter = emitActions[pro.Name];
+                        }
+                        else
+                        {
+                            emitSetter = EmitSetter<T>(pro.Name);
+                            emitActions.Add(pro.Name, emitSetter);
+                        }
+
+                        emitSetter(obj, val);
+
+                        //pro.SetValue(obj, val);
                     }
+
                     list.Add((T)obj);
                 }
+
+                _emitActions = emitActions;
             }
         }
         #endregion
@@ -1597,6 +1635,9 @@ namespace DBUtil
             if (fieldType == typeof(Nullable<DateTime>))
                 return Convert.ToDateTime(rdValue);
 
+            if (fieldType == typeof(string))
+                return Convert.ToString(rdValue);
+
             return rdValue;
         }
         #endregion
@@ -1737,6 +1778,41 @@ namespace DBUtil
         }
         #endregion
 
+        #endregion
+
+        #region EmitSetter
+        /// <summary>
+        /// EmitSetter
+        /// </summary>
+        public static Action<T, object> EmitSetter<T>(string propertyName)
+        {
+            var type = typeof(T);
+            var dynamicMethod = new DynamicMethod("EmitCall", null, new[] { type, typeof(object) }, type.Module);
+            var iLGenerator = dynamicMethod.GetILGenerator();
+
+            var callMethod = type.GetMethod("set_" + propertyName, BindingFlags.Instance | BindingFlags.IgnoreCase | BindingFlags.Public);
+            var parameterInfo = callMethod.GetParameters()[0];
+            var local = iLGenerator.DeclareLocal(parameterInfo.ParameterType, true);
+
+            iLGenerator.Emit(OpCodes.Ldarg_1);
+            if (parameterInfo.ParameterType.IsValueType)
+            {
+                iLGenerator.Emit(OpCodes.Unbox_Any, parameterInfo.ParameterType); // 如果是值类型，拆箱
+            }
+            else
+            {
+                iLGenerator.Emit(OpCodes.Castclass, parameterInfo.ParameterType); // 如果是引用类型，转换
+            }
+
+            iLGenerator.Emit(OpCodes.Stloc, local);
+            iLGenerator.Emit(OpCodes.Ldarg_0);
+            iLGenerator.Emit(OpCodes.Ldloc, local);
+
+            iLGenerator.EmitCall(OpCodes.Callvirt, callMethod, null);
+            iLGenerator.Emit(OpCodes.Ret);
+
+            return dynamicMethod.CreateDelegate(typeof(Action<T, object>)) as Action<T, object>;
+        }
         #endregion
 
     }

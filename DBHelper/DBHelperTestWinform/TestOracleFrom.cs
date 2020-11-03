@@ -44,7 +44,7 @@ namespace DBHelperTestWinform
                     {
                         using (var session = DBHelper.GetSession())
                         {
-                            string sql = "select * from CARINFO_MERGE where rownum<10000";
+                            string sql = "select * from CARINFO_MERGE where rownum<20000";
                             LogTimeUtil logTime = new LogTimeUtil();
                             List<CARINFO_MERGE> result = session.FindListBySql<CARINFO_MERGE>(sql);
                             Log(logTime.LogTime("耗时"));
