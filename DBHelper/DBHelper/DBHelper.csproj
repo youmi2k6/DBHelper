@@ -59,6 +59,7 @@
     <Compile Include="Models\PagerModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Session\ISession.cs" />
+    <Compile Include="Utils\EmitUtil.cs" />
     <Compile Include="Utils\PropertiesCache.cs" />
     <Compile Include="Utils\SqlString.cs" />
   </ItemGroup>
