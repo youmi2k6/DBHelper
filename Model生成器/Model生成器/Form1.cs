@@ -72,19 +72,21 @@ namespace Model生成器
                     int i = 0;
                     foreach (Dictionary<string, string> table in tableList) //遍历表
                     {
-                        string tableName = table["table_name"].ToUpper();
+                        string tableName = table["table_name"].ToUpper().Trim();
                         StringBuilder sbFields = new StringBuilder();
                         List<Dictionary<string, string>> columnList = dal.GetAllColumns(tableName);
 
                         #region 原始Model
-                        string strClass = strClassTemplate.Replace("#table_comments", table["comments"]);
+                        string tableComments = table["comments"] ?? string.Empty;
+                        string strClass = strClassTemplate.Replace("#table_comments", tableComments.Replace("\r\n", "\r\n    /// ").Replace("\n", "\r\n        /// "));
                         strClass = strClass.Replace("#table_name", tableName);
 
                         foreach (Dictionary<string, string> column in columnList) //遍历字段
                         {
                             string data_type = dal.ConvertDataType(column);
 
-                            string strField = strFieldTemplate.Replace("#field_comments", column["comments"]);
+                            string columnComments = column["comments"] ?? string.Empty;
+                            string strField = strFieldTemplate.Replace("#field_comments", columnComments.Replace("\r\n", "\r\n        /// ").Replace("\n", "\r\n        /// "));
 
                             if (column["constraint_type"] != "P")
                             {
@@ -103,7 +105,7 @@ namespace Model生成器
                         #endregion
 
                         #region 扩展Model
-                        string strClassExt = strClassExtTemplate.Replace("#table_comments", table["comments"]);
+                        string strClassExt = strClassExtTemplate.Replace("#table_comments", tableComments.Replace("\r\n", "\r\n    ///"));
                         strClassExt = strClassExt.Replace("#table_name", tableName);
 
                         FileHelper.WriteFile(Application.StartupPath + "\\ExtModels", strClassExt.ToString(), tableName);
