@@ -943,6 +943,16 @@ namespace DBUtil
             if (string.IsNullOrWhiteSpace(condition)) return;
 
             Type type = typeof(T);
+            DeleteByCondition(type, condition);
+        }
+
+        /// <summary>
+        /// 根据条件删除
+        /// </summary>
+        public void DeleteByCondition(Type type, string condition)
+        {
+            if (string.IsNullOrWhiteSpace(condition)) return;
+
             StringBuilder sbSql = new StringBuilder();
             SqlFilter(ref condition);
             sbSql.Append(string.Format("delete from {0} where {1}", type.Name, condition));
@@ -958,6 +968,17 @@ namespace DBUtil
             if (string.IsNullOrWhiteSpace(condition)) return;
 
             Type type = typeof(T);
+            var task = DeleteByConditionAsync(type, condition);
+            await task;
+        }
+
+        /// <summary>
+        /// 根据条件删除
+        /// </summary>
+        public async Task DeleteByConditionAsync(Type type, string condition)
+        {
+            if (string.IsNullOrWhiteSpace(condition)) return;
+
             StringBuilder sbSql = new StringBuilder();
             SqlFilter(ref condition);
             sbSql.Append(string.Format("delete from {0} where {1}", type.Name, condition));

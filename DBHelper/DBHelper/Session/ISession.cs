@@ -18,6 +18,15 @@ namespace DBUtil
 
         #endregion
 
+        #region 执行带参数的SQL语句
+        /// <summary>
+        /// 执行SQL语句，返回影响的记录数
+        /// </summary>
+        /// <param name="SQLString">SQL语句</param>
+        /// <returns>影响的记录数</returns>
+        int ExecuteSql(string SQLString, params DbParameter[] cmdParms);
+        #endregion
+
         #endregion
 
         #region 增删改查
@@ -114,7 +123,17 @@ namespace DBUtil
         /// <summary>
         /// 根据条件删除
         /// </summary>
+        void DeleteByCondition(Type type, string conditions);
+
+        /// <summary>
+        /// 根据条件删除
+        /// </summary>
         Task DeleteByConditionAsync<T>(string condition);
+
+        /// <summary>
+        /// 根据条件删除
+        /// </summary>
+        Task DeleteByConditionAsync(Type type, string condition);
         #endregion
 
         #region 获取实体
