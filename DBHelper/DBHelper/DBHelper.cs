@@ -780,7 +780,7 @@ namespace DBUtil
             {
                 strSql.Append(sbPros.ToString(0, sbPros.Length - 1));
             }
-            strSql.Append(string.Format(" where 1=1 {0}", CreatePkCondition(obj.GetType(), obj)));
+            strSql.Append(string.Format(" where {0}", CreatePkCondition(obj.GetType(), obj)));
         }
 
         /// <summary>
@@ -1133,7 +1133,7 @@ namespace DBUtil
         {
             Type type = obj.GetType();
 
-            string sql = string.Format("select * from {0} where 1=1 {1}", type.Name, CreatePkCondition(obj.GetType(), obj));
+            string sql = string.Format("select * from {0} where {1}", type.Name, CreatePkCondition(obj.GetType(), obj));
 
             return Find(type, sql, null);
         }
@@ -1145,7 +1145,7 @@ namespace DBUtil
         {
             Type type = obj.GetType();
 
-            string sql = string.Format("select * from {0} where 1=1 {1}", type.Name, CreatePkCondition(obj.GetType(), obj));
+            string sql = string.Format("select * from {0} where {1}", type.Name, CreatePkCondition(obj.GetType(), obj));
 
             var task = FindAsync(type, sql, null);
             return await task;
@@ -1715,19 +1715,22 @@ namespace DBUtil
             StringBuilder sql = new StringBuilder();
 
             PropertyInfo[] propertyInfoList = GetEntityProperties(type);
+            int i = 0;
             foreach (PropertyInfo propertyInfo in propertyInfoList)
             {
                 if (propertyInfo.GetCustomAttributes(typeof(IsIdAttribute), false).Length > 0)
                 {
+                    if (i != 0) sql.Append(" and ");
                     object fieldValue = val.GetType().GetProperty(propertyInfo.Name).GetValue(val, null);
                     if (fieldValue.GetType() == typeof(string) || fieldValue.GetType() == typeof(String))
                     {
-                        sql.AppendFormat(" and {0}='{1}'", propertyInfo.Name, fieldValue);
+                        sql.AppendFormat(" {0}='{1}'", propertyInfo.Name, fieldValue);
                     }
                     else
                     {
-                        sql.AppendFormat(" and {0}={1}", propertyInfo.Name, fieldValue);
+                        sql.AppendFormat(" {0}={1}", propertyInfo.Name, fieldValue);
                     }
+                    i++;
                 }
             }
 
