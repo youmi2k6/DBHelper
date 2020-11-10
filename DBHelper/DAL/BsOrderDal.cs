@@ -56,7 +56,7 @@ namespace DAL
         }
         #endregion
 
-        #region 添加异步
+        #region 添加(异步)
         /// <summary>
         /// 添加
         /// </summary>

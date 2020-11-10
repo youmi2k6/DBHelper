@@ -374,6 +374,30 @@ namespace DBUtil
                 }
             }
         }
+
+        public async Task<bool> ExistsAsync(string sqlString)
+        {
+            SqlFilter(ref sqlString);
+            if (_conn.State != ConnectionState.Open)
+            {
+                var task1 = _conn.OpenAsync();
+                await task1;
+            }
+            using (DbCommand cmd = GetCommand(sqlString, _conn))
+            {
+                var task2 = cmd.ExecuteScalarAsync();
+                object obj = await task2;
+
+                if ((Object.Equals(obj, null)) || (Object.Equals(obj, System.DBNull.Value)))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
         #endregion
 
         #region 执行SQL语句，返回影响的记录数
@@ -390,6 +414,28 @@ namespace DBUtil
             {
                 if (_tran != null) cmd.Transaction = _tran;
                 int rows = cmd.ExecuteNonQuery();
+                return rows;
+            }
+        }
+
+        /// <summary>
+        /// 执行SQL语句，返回影响的记录数
+        /// </summary>
+        /// <param name="sqlString">SQL语句</param>
+        /// <returns>影响的记录数</returns>
+        public async Task<int> ExecuteSqlAsync(string sqlString)
+        {
+            SqlFilter(ref sqlString);
+            if (_conn.State != ConnectionState.Open)
+            {
+                var task1 = _conn.OpenAsync();
+                await task1;
+            }
+            using (DbCommand cmd = GetCommand(sqlString, _conn))
+            {
+                if (_tran != null) cmd.Transaction = _tran;
+                var task2 = cmd.ExecuteNonQueryAsync();
+                int rows = await task2;
                 return rows;
             }
         }
@@ -1016,12 +1062,11 @@ namespace DBUtil
 
                 foreach (PropertyInfo pro in propertyInfoList)
                 {
+                    if (!fields.ContainsKey(pro.Name.ToUpper())) continue;
+
                     object val = record[pro.Name];
 
-                    if (!fields.ContainsKey(pro.Name.ToUpper()) || val == DBNull.Value)
-                    {
-                        continue;
-                    }
+                    if (val == DBNull.Value) continue;
 
                     val = val == DBNull.Value ? null : ConvertValue(val, pro.PropertyType);
 
@@ -1331,12 +1376,11 @@ namespace DBUtil
 
                     foreach (PropertyInfo pro in propertyInfoList)
                     {
+                        if (!fields.ContainsKey(pro.Name.ToUpper())) continue;
+
                         object val = record[pro.Name];
 
-                        if (!fields.ContainsKey(pro.Name.ToUpper()) || val == DBNull.Value)
-                        {
-                            continue;
-                        }
+                        if (val == DBNull.Value) continue;
 
                         val = val == DBNull.Value ? null : ConvertValue(val, pro.PropertyType);
 

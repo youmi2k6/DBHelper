@@ -16,15 +16,40 @@ namespace DBUtil
 
         bool Exists(string sqlString);
 
+        Task<bool> ExistsAsync(string sqlString);
+
+        /// <summary>
+        /// 执行SQL语句，返回影响的记录数
+        /// </summary>
+        /// <param name="sqlString">SQL语句</param>
+        /// <returns>影响的记录数</returns>
+        int ExecuteSql(string sqlString);
+
+        /// <summary>
+        /// 执行SQL语句，返回影响的记录数
+        /// </summary>
+        /// <param name="sqlString">SQL语句</param>
+        /// <returns>影响的记录数</returns>
+        Task<int> ExecuteSqlAsync(string sqlString);
+
         #endregion
 
         #region 执行带参数的SQL语句
+
         /// <summary>
         /// 执行SQL语句，返回影响的记录数
         /// </summary>
         /// <param name="SQLString">SQL语句</param>
         /// <returns>影响的记录数</returns>
         int ExecuteSql(string SQLString, params DbParameter[] cmdParms);
+
+        /// <summary>
+        /// 执行SQL语句，返回影响的记录数
+        /// </summary>
+        /// <param name="SQLString">SQL语句</param>
+        /// <returns>影响的记录数</returns>
+        Task<int> ExecuteSqlAsync(string SQLString, params DbParameter[] cmdParms);
+
         #endregion
 
         #endregion
