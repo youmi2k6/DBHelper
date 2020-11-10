@@ -48,7 +48,8 @@ namespace DAL
         /// </summary>
         public async Task InsertAsync(SYS_USER info)
         {
-            using (var session = DBHelper.GetSession())
+            var task2 = DBHelper.GetSessionAsync();
+            using (var session = await task2)
             {
                 info.CREATE_TIME = DateTime.Now;
                 var task = session.InsertAsync(info);
@@ -77,7 +78,8 @@ namespace DAL
         /// </summary>
         public async Task UpdateAsync(SYS_USER info)
         {
-            using (var session = DBHelper.GetSession())
+            var task2 = DBHelper.GetSessionAsync();
+            using (var session = await task2)
             {
                 info.UPDATE_TIME = DateTime.Now;
                 var task = session.UpdateAsync(info);
