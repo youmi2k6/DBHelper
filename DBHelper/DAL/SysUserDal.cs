@@ -48,12 +48,10 @@ namespace DAL
         /// </summary>
         public async Task InsertAsync(SYS_USER info)
         {
-            var task2 = DBHelper.GetSessionAsync();
-            using (var session = await task2)
+            using (var session = await DBHelper.GetSessionAsync())
             {
                 info.CREATE_TIME = DateTime.Now;
-                var task = session.InsertAsync(info);
-                await task;
+                await session.InsertAsync(info);
             }
         }
         #endregion
@@ -78,8 +76,7 @@ namespace DAL
         /// </summary>
         public async Task UpdateAsync(SYS_USER info)
         {
-            var task2 = DBHelper.GetSessionAsync();
-            using (var session = await task2)
+            using (var session = await DBHelper.GetSessionAsync())
             {
                 info.UPDATE_TIME = DateTime.Now;
                 var task = session.UpdateAsync(info);

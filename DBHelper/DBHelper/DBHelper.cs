@@ -18,7 +18,7 @@ using System.Reflection.Emit;
 /* ----------------------------------------------------------------------
 * 作    者：suxiang
 * 创建日期：2016年11月23日
-* 更新日期：2020年11月01日
+* 更新日期：2020年11月18日
 * 
 * 支持Oracle、MSSQL、MySQL、SQLite、Access数据库
 * 
@@ -139,8 +139,7 @@ namespace DBUtil
         public static async Task<ISession> GetSessionAsync()
         {
             DBHelper dbHelper = new DBHelper();
-            var task = dbHelper.InitConnAsync();
-            await task;
+            await dbHelper.InitConnAsync();
             return dbHelper;
         }
         #endregion
@@ -161,8 +160,7 @@ namespace DBUtil
         private async Task InitConnAsync()
         {
             _conn = DBFactory.CreateConnection(_dbType, _connectionString);
-            var task = _conn.OpenAsync();
-            await task;
+            await _conn.OpenAsync();
         }
         #endregion
 
@@ -354,7 +352,9 @@ namespace DBUtil
         #endregion
 
         #region 基础方法
+
         #region  执行简单SQL语句
+
         #region Exists
         public bool Exists(string sqlString)
         {
@@ -380,13 +380,11 @@ namespace DBUtil
             SqlFilter(ref sqlString);
             if (_conn.State != ConnectionState.Open)
             {
-                var task1 = _conn.OpenAsync();
-                await task1;
+                await _conn.OpenAsync();
             }
             using (DbCommand cmd = GetCommand(sqlString, _conn))
             {
-                var task2 = cmd.ExecuteScalarAsync();
-                object obj = await task2;
+                object obj = await cmd.ExecuteScalarAsync();
 
                 if ((Object.Equals(obj, null)) || (Object.Equals(obj, System.DBNull.Value)))
                 {
@@ -428,14 +426,12 @@ namespace DBUtil
             SqlFilter(ref sqlString);
             if (_conn.State != ConnectionState.Open)
             {
-                var task1 = _conn.OpenAsync();
-                await task1;
+                await _conn.OpenAsync();
             }
             using (DbCommand cmd = GetCommand(sqlString, _conn))
             {
                 if (_tran != null) cmd.Transaction = _tran;
-                var task2 = cmd.ExecuteNonQueryAsync();
-                int rows = await task2;
+                int rows = await cmd.ExecuteNonQueryAsync();
                 return rows;
             }
         }
@@ -530,9 +526,11 @@ namespace DBUtil
             }
         }
         #endregion
+
         #endregion
 
         #region 执行带参数的SQL语句
+
         #region 执行SQL语句，返回影响的记录数
         /// <summary>
         /// 执行SQL语句，返回影响的记录数
@@ -559,8 +557,7 @@ namespace DBUtil
         {
             using (DbCommand cmd = GetCommand())
             {
-                var task2 = PrepareCommandAsync(cmd, _conn, _tran, SQLString, cmdParms);
-                await task2;
+                await PrepareCommandAsync(cmd, _conn, _tran, SQLString, cmdParms);
                 var task = cmd.ExecuteNonQueryAsync();
                 int rows = await task;
                 cmd.Parameters.Clear();
@@ -595,10 +592,8 @@ namespace DBUtil
         {
             using (DbCommand cmd = GetCommand())
             {
-                var task2 = PrepareCommandAsync(cmd, _conn, null, sqlString, cmdParms);
-                await task2;
-                var task = cmd.ExecuteReaderAsync();
-                DbDataReader myReader = await task;
+                await PrepareCommandAsync(cmd, _conn, null, sqlString, cmdParms);
+                DbDataReader myReader = await cmd.ExecuteReaderAsync();
                 cmd.Parameters.Clear();
                 return myReader;
             }
@@ -646,7 +641,7 @@ namespace DBUtil
 
         private static async Task PrepareCommandAsync(DbCommand cmd, DbConnection conn, DbTransaction trans, string cmdText, DbParameter[] cmdParms)
         {
-            if (conn.State != ConnectionState.Open) { var task = conn.OpenAsync(); await task; }
+            if (conn.State != ConnectionState.Open) await conn.OpenAsync();
             cmd.Connection = conn;
             cmd.CommandText = cmdText;
             if (trans != null) cmd.Transaction = trans;
@@ -660,7 +655,9 @@ namespace DBUtil
             }
         }
         #endregion
+
         #endregion
+
         #endregion
 
         #region 增删改查
@@ -744,8 +741,7 @@ namespace DBUtil
         /// </summary>
         public async Task InsertAsync(object obj)
         {
-            var task = InsertAsync(obj, _autoIncrement);
-            await task;
+            await InsertAsync(obj, _autoIncrement);
         }
 
         /// <summary>
@@ -773,8 +769,7 @@ namespace DBUtil
 
             PrepareInsertSql(obj, autoIncrement, ref strSql, ref parameters, ref savedCount);
 
-            var task = ExecuteSqlAsync(strSql.ToString(), parameters);
-            await task;
+            await ExecuteSqlAsync(strSql.ToString(), parameters);
         }
         #endregion
 
@@ -853,8 +848,7 @@ namespace DBUtil
         /// </summary>
         public async Task UpdateAsync(object obj)
         {
-            var task = FindAsync(obj);
-            object oldObj = await task;
+            object oldObj = await FindAsync(obj);
             if (oldObj == null) throw new Exception("无法获取到旧数据");
 
             StringBuilder strSql = new StringBuilder();
@@ -864,8 +858,7 @@ namespace DBUtil
 
             if (savedCount > 0)
             {
-                var task2 = ExecuteSqlAsync(strSql.ToString(), parameters);
-                await task2;
+                await ExecuteSqlAsync(strSql.ToString(), parameters);
             }
         }
         #endregion
@@ -896,8 +889,7 @@ namespace DBUtil
             cmdParms[0] = GetDbParameter(_parameterMark + GetIdName(type), id);
             sbSql.Append(string.Format("delete from {0} where {2}={1}{2}", type.Name, _parameterMark, GetIdName(type)));
 
-            var task = ExecuteSqlAsync(sbSql.ToString(), cmdParms);
-            await task;
+            await ExecuteSqlAsync(sbSql.ToString(), cmdParms);
         }
 
         /// <summary>
@@ -913,8 +905,7 @@ namespace DBUtil
         /// </summary>
         public async Task DeleteByIdAsync<T>(long id)
         {
-            var task = DeleteByIdAsync<T>(id.ToString());
-            await task;
+            await DeleteByIdAsync<T>(id.ToString());
         }
 
         /// <summary>
@@ -930,8 +921,7 @@ namespace DBUtil
         /// </summary>
         public async Task DeleteByIdAsync<T>(int id)
         {
-            var task = DeleteByIdAsync<T>(id.ToString());
-            await task;
+            await DeleteByIdAsync<T>(id.ToString());
         }
 
         /// <summary>
@@ -977,8 +967,7 @@ namespace DBUtil
             sbSql.Remove(sbSql.Length - 1, 1);
             sbSql.Append(")");
 
-            var task = ExecuteSqlAsync(sbSql.ToString(), cmdParms);
-            await task;
+            await ExecuteSqlAsync(sbSql.ToString(), cmdParms);
         }
 
         /// <summary>
@@ -1014,8 +1003,7 @@ namespace DBUtil
             if (string.IsNullOrWhiteSpace(condition)) return;
 
             Type type = typeof(T);
-            var task = DeleteByConditionAsync(type, condition);
-            await task;
+            await DeleteByConditionAsync(type, condition);
         }
 
         /// <summary>
@@ -1029,8 +1017,7 @@ namespace DBUtil
             SqlFilter(ref condition);
             sbSql.Append(string.Format("delete from {0} where {1}", type.Name, condition));
 
-            var task = ExecuteSqlAsync(sbSql.ToString());
-            await task;
+            await ExecuteSqlAsync(sbSql.ToString());
         }
         #endregion
 
@@ -1135,13 +1122,11 @@ namespace DBUtil
             {
                 if (args == null)
                 {
-                    var task = ExecuteReaderAsync(sql);
-                    rd = await task;
+                    rd = await ExecuteReaderAsync(sql);
                 }
                 else
                 {
-                    var task = ExecuteReaderAsync(sql, args);
-                    rd = await task;
+                    rd = await ExecuteReaderAsync(sql, args);
                 }
 
                 IDataReaderToObject(type, rd, ref result, ref hasValue);
@@ -1192,8 +1177,7 @@ namespace DBUtil
 
             string sql = string.Format("select * from {0} where {1}", type.Name, CreatePkCondition(obj.GetType(), obj));
 
-            var task = FindAsync(type, sql, null);
-            return await task;
+            return await FindAsync(type, sql, null);
         }
         #endregion
 
@@ -1228,8 +1212,7 @@ namespace DBUtil
 
             string sql = string.Format("select * from {0} where {2}='{1}'", type.Name, id, GetIdName(type));
 
-            var task = FindAsync(type, sql, null);
-            object result = await task;
+            object result = await FindAsync(type, sql, null);
 
             if (result != null)
             {
@@ -1267,8 +1250,7 @@ namespace DBUtil
         public async Task<T> FindBySqlAsync<T>(string sql) where T : new()
         {
             Type type = typeof(T);
-            var task = FindAsync(type, sql, null);
-            object result = await task;
+            object result = await FindAsync(type, sql, null);
 
             if (result != null)
             {
@@ -1306,8 +1288,7 @@ namespace DBUtil
         public async Task<T> FindBySqlAsync<T>(string sql, params DbParameter[] args) where T : new()
         {
             Type type = typeof(T);
-            var task = FindAsync(type, sql, args);
-            object result = await task;
+            object result = await FindAsync(type, sql, args);
 
             if (result != null)
             {
@@ -1449,8 +1430,7 @@ namespace DBUtil
 
             try
             {
-                var task = ExecuteReaderAsync(sql);
-                rd = await task;
+                rd = await ExecuteReaderAsync(sql);
 
                 IDataReaderToList(rd, ref list);
             }
@@ -1512,8 +1492,7 @@ namespace DBUtil
 
             try
             {
-                var task = ExecuteReaderAsync(sql, cmdParms);
-                rd = await task;
+                rd = await ExecuteReaderAsync(sql, cmdParms);
 
                 IDataReaderToList(rd, ref list);
             }
@@ -1571,14 +1550,12 @@ namespace DBUtil
             string commandText = null;
             commandText = string.Format("select count(*) from ({0}) T", sql);
             cmd = GetCommand(commandText, _conn);
-            var task2 = cmd.ExecuteScalarAsync();
-            object obj = await task2;
+            object obj = await cmd.ExecuteScalarAsync();
             pagerModel.TotalRows = int.Parse(obj.ToString());
 
             sql = PageSqlFactory.CreatePageSql(_dbType, sql, orderby, pageSize, currentPage, pagerModel.TotalRows);
 
-            var task = FindListBySqlAsync<T>(sql);
-            List<T> list = await task;
+            List<T> list = await FindListBySqlAsync<T>(sql);
             pagerModel.Result = list;
 
             return pagerModel;
@@ -1623,15 +1600,13 @@ namespace DBUtil
             commandText = string.Format("select count(*) from ({0}) T", sql);
             cmd = GetCommand(commandText, _conn);
             foreach (DbParameter parm in cmdParms) cmd.Parameters.Add(parm);
-            var task2 = cmd.ExecuteScalarAsync();
-            object obj = await task2;
+            object obj = await cmd.ExecuteScalarAsync();
             pagerModel.TotalRows = int.Parse(obj.ToString());
             cmd.Parameters.Clear();
 
             sql = PageSqlFactory.CreatePageSql(_dbType, sql, orderby, pageSize, currentPage, pagerModel.TotalRows);
 
-            var task = FindListBySqlAsync<T>(sql, cmdParms);
-            List<T> list = await task;
+            List<T> list = await FindListBySqlAsync<T>(sql, cmdParms);
             pagerModel.Result = list;
 
             return pagerModel;

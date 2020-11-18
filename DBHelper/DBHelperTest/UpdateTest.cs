@@ -96,8 +96,7 @@ namespace DBHelperTest
             {
                 user.UPDATE_USERID = "1";
                 user.REMARK = "测试修改用户" + _rnd.Next(1, 100);
-                var task = m_SysUserDal.UpdateAsync(user);
-                await task;
+                await m_SysUserDal.UpdateAsync(user);
                 Console.WriteLine("用户 ID=" + user.ID + " 已修改");
             }
             else

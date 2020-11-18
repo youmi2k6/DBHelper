@@ -62,8 +62,7 @@ namespace DAL
         /// </summary>
         public async Task<string> InsertAsync(BS_ORDER order, List<BS_ORDER_DETAIL> detailList)
         {
-            var task2 = DBHelper.GetSessionAsync();
-            using (var session = await task2)
+            using (var session = await DBHelper.GetSessionAsync())
             {
                 try
                 {
@@ -79,13 +78,11 @@ namespace DAL
                         detail.ORDER_ID = order.ID;
                         detail.CREATE_TIME = DateTime.Now;
                         amount += detail.PRICE * detail.QUANTITY;
-                        var task3 = session.InsertAsync(detail);
-                        await task3;
+                        await session.InsertAsync(detail);
                     }
                     order.AMOUNT = amount;
 
-                    var task = session.InsertAsync(order);
-                    await task;
+                    await session.InsertAsync(order);
 
                     session.CommitTransaction();
 
@@ -166,8 +163,7 @@ namespace DAL
         /// </summary>
         public async Task<string> UpdateAsync(BS_ORDER order, List<BS_ORDER_DETAIL> detailList)
         {
-            var task2 = DBHelper.GetSessionAsync();
-            using (var session = await task2)
+            using (var session = await DBHelper.GetSessionAsync())
             {
                 try
                 {
@@ -191,8 +187,7 @@ namespace DAL
                         if (oldDetailList.Exists(a => a.ID == detail.ID)) //该订单明细存在
                         {
                             detail.UPDATE_TIME = DateTime.Now;
-                            var task = session.UpdateAsync(detail);
-                            await task;
+                            await session.UpdateAsync(detail);
                         }
                         else //该订单明细不存在
                         {
@@ -205,8 +200,7 @@ namespace DAL
                     order.AMOUNT = amount;
 
                     order.UPDATE_TIME = DateTime.Now;
-                    var task3 = session.UpdateAsync(order);
-                    await task3;
+                    await session.UpdateAsync(order);
 
                     session.CommitTransaction();
 
@@ -288,8 +282,7 @@ namespace DAL
         /// </summary>
         public async Task<List<BS_ORDER>> GetListAsync(int? status, string remark, DateTime? startTime, DateTime? endTime)
         {
-            var task2 = DBHelper.GetSessionAsync();
-            using (var session = await task2)
+            using (var session = await DBHelper.GetSessionAsync())
             {
                 SqlString sql = new SqlString(@"
                     select t.*, u.real_name as OrderUserRealName
@@ -319,8 +312,7 @@ namespace DAL
 
                 sql.AppendSql(" order by t.order_time desc, t.id asc ");
 
-                var task = session.FindListBySqlAsync<BS_ORDER>(sql.SQL, sql.Params);
-                List<BS_ORDER> list = await task;
+                List<BS_ORDER> list = await session.FindListBySqlAsync<BS_ORDER>(sql.SQL, sql.Params);
                 return list;
             }
         }
@@ -373,8 +365,7 @@ namespace DAL
         /// </summary>
         public async Task<PagerModel> GetListPageAsync(PagerModel pager, int? status, string remark, DateTime? startTime, DateTime? endTime)
         {
-            var task2 = DBHelper.GetSessionAsync();
-            using (var session = await task2)
+            using (var session = await DBHelper.GetSessionAsync())
             {
                 SqlString sql = new SqlString(@"
                     select t.*, u.real_name as OrderUserRealName
@@ -403,8 +394,7 @@ namespace DAL
                 }
 
                 string orderby = " order by t.order_time desc, t.id asc ";
-                var task = session.FindPageBySqlAsync<BS_ORDER>(sql.SQL, orderby, pager.PageSize, pager.CurrentPage, sql.Params);
-                pager = await task;
+                pager = await session.FindPageBySqlAsync<BS_ORDER>(sql.SQL, orderby, pager.PageSize, pager.CurrentPage, sql.Params);
                 return pager;
             }
         }
