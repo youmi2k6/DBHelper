@@ -117,6 +117,7 @@ namespace DAL
                     }
                     break;
                 case "float":
+                case "double":
                 case "decimal":
                     if (column["notnull"] == "1")
                     {
