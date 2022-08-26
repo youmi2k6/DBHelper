@@ -409,31 +409,31 @@ namespace Models
         public int? BUILD_PERIOD { get; set; }
 
         /// <summary>
-        /// 项目名称：合肥雪亮工程一期
+        /// 项目名称：
         /// </summary>
         [IsDBField]
         public string PROJECT_NAME { get; set; }
 
         /// <summary>
-        /// 合肥市公安局，待确认
+        /// ，待确认
         /// </summary>
         [IsDBField]
         public string MANAGER_UNIT { get; set; }
 
         /// <summary>
-        /// 电话号码，待确认
+        /// ，待确认
         /// </summary>
         [IsDBField]
         public string MANAGER_UNIT_TEL { get; set; }
 
         /// <summary>
-        /// 四创电子、自定义
+        /// 、自定义
         /// </summary>
         [IsDBField]
         public string MAINTAIN_UNIT { get; set; }
 
         /// <summary>
-        /// 四创电子运维电话
+        /// 
         /// </summary>
         [IsDBField]
         public string MAINTAIN_UNIT_TEL { get; set; }
